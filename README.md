@@ -5,7 +5,7 @@
 Android 输入法应用：**手机 ↔ 电视盒子 局域网联动输入**。
 手机扫二维码 / 打开控制台，即可把文字、文件、图片实时发到电视，还能当遥控器用。
 
-> 包名：`com.qrinput.ime` ｜ 版本：v1.5 ｜ 大小：约 3.7 MB
+> 包名：`com.qrinput.ime` ｜ 版本：v1.6 ｜ 大小：约 3.4 MB
 
 ## 📸 预览
 
@@ -28,7 +28,7 @@ Android 输入法应用：**手机 ↔ 电视盒子 局域网联动输入**。
 
 ## 📲 安装
 
-1. 将 `二维码输入法-v1.5.apk` 安装到 **Android 电视盒子 / 电视**（支持 Android 系统的盒子即可）；
+1. 将 `二维码输入法-v1.6.apk` 安装到 **Android 电视盒子 / 电视**（支持 Android 系统的盒子即可）；
 2. 系统设置 → 语言与输入法 → 启用「二维码输入法」；
 3. 电视上显示配对二维码（控制台地址）；
 4. **手机无需安装任何 App**，扫码后用浏览器打开控制台即可打字、遥控。
@@ -50,6 +50,12 @@ APK 内置 HTTP 服务端，控制台页面与以下 REST 接口均由它提供�
 | POST | `/api/key` | 按键（up/down/left/right/ok/back/esc/tab/info） |
 | GET | `/api/selection` | 读取电视端选中文本 |
 | POST | `/api/image` | 图片投屏 `{data: "data:image/jpeg;base64,..."}` |
+| GET | `/api/phrases` | 常用短语 `{list: [...]}` |
+| POST | `/api/phrases` | 保存常用短语（body 为 JSON 数组） |
+| GET | `/api/history` | 剪贴板历史 `{list: [...]}` |
+| POST | `/api/history` | 保存剪贴板历史（body 为 JSON 数组） |
+
+> 短语与历史存于盒子端，换手机扫码数据不丢。
 
 ## 📄 License
 
@@ -59,7 +65,7 @@ APK 内置 HTTP 服务端，控制台页面与以下 REST 接口均由它提供�
 
 ```
 .
-├── 二维码输入法-v1.5.apk   # 安装包
+├── 二维码输入法-v1.6.apk   # 安装包
 ├── assets/
 │   └── input.html          # 内置控制台源码
 ├── docs/

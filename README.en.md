@@ -3,7 +3,7 @@
 An **Android IME** that lets you type from your phone onto your **TV box over the local network**.
 Scan the QR code / open the console to send text, files, and images to the TV in real time — it even doubles as a remote control.
 
-> Package: `com.qrinput.ime` ｜ Version: v1.5 ｜ Size: ~3.7 MB
+> Package: `com.qrinput.ime` ｜ Version: v1.6 ｜ Size: ~3.4 MB
 
 **Read this in [中文](README.md).**
 
@@ -28,7 +28,7 @@ Scan the QR code / open the console to send text, files, and images to the TV in
 
 ## 📲 Installation
 
-1. Install `二维码输入法-v1.5.apk` on an **Android TV box / TV** (any Android-based box);
+1. Install `二维码输入法-v1.6.apk` on an **Android TV box / TV** (any Android-based box);
 2. Settings → Language & Input → enable **QR Input IME**;
 3. A pairing QR code (console URL) appears on the TV;
 4. **No app needed on your phone** — scan the QR code and the console opens in your browser.
@@ -50,12 +50,18 @@ The APK embeds an HTTP server that serves both the console page and the REST end
 | POST | `/api/key` | Send key (up/down/left/right/ok/back/esc/tab/info) |
 | GET | `/api/selection` | Read the selected text on the TV |
 | POST | `/api/image` | Cast an image `{data: "data:image/jpeg;base64,..."}` |
+| GET | `/api/phrases` | Common phrases `{list: [...]}` |
+| POST | `/api/phrases` | Save phrases (body: JSON array) |
+| GET | `/api/history` | Clipboard history `{list: [...]}` |
+| POST | `/api/history` | Save history (body: JSON array) |
+
+> Phrases & history are stored on the box — data persists across phones.
 
 ## 📁 Repo layout
 
 ```
 .
-├── 二维码输入法-v1.5.apk   # Installer
+├── 二维码输入法-v1.6.apk   # Installer
 ├── assets/
 │   └── input.html          # Bundled console source
 ├── docs/
