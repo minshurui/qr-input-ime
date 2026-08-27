@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>二维码输入法 v1.5 控制台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; color: #fff; padding: 16px;
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+        }
+        .card {
+            background: rgba(255,255,255,0.13); backdrop-filter: blur(10px);
+            border-radius: 14px; padding: 12px; width: 100%; max-width: 520px;
+        }
+        .card h2 { font-size: 14px; opacity: .85; margin-bottom: 8px; }
+        /* 设备栏 */
+        .dev-row { display: flex; gap: 8px; align-items: center; }
+        select#device-select {
+            flex: 1; background: rgba(0,0,0,.25); color: #fff; border: none;
+            border-radius: 8px; padding: 8px; font-size: 14px;
+        }
+        option { color: #000; }
+        .mini-btn {
+            border: none; border-radius: 8px; padding: 8px 12px; font-size: 13px;
+            background: rgba(255,255,255,.25); color: #fff; cursor: pointer;
+        }
+        .mini-btn:active { transform: scale(.94); }
+        .dot { width: 9px; height: 9px; border-radius: 50%; background: #4ade80; display: inline-block; margin-right: 6px; }
+        .dot.off { background: #f87171; }
+        /* 输入区 */
+        textarea#input-box {
+            width: 100%; min-height: 90px; border-radius: 10px; border: 2px solid transparent;
+            padding: 10px; font-size: 17px; line-height: 1.5; resize: vertical;
+            outline: none; color: #222; font-family: inherit; background: #fff;
+        }
+        textarea#input-box:focus { border-color: #a5b4fc; }
+        .row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .btn {
+            flex: 1; min-width: 72px; border: none; border-radius: 10px; padding: 11px 6px;
+            font-size: 14px; font-weight: 600; cursor: pointer; color: #fff;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .btn.gray { background: rgba(255,255,255,.22); }
+        .btn.red { background: #dc2626; }
+        .btn:active { transform: scale(.95); }
+        .count { text-align: right; font-size: 12px; opacity: .75; margin-top: 6px; }
+        .url-tip { display: none; font-size: 12px; color: #fde68a; margin-top: 4px; word-break: break-all; }
+        /* 遥控器 */
+        .dpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 240px; margin: 0 auto; }
+        .dpad button, .remote-extra button {
+            border: none; border-radius: 10px; padding: 13px 0; font-size: 18px;
+            background: rgba(255,255,255,.22); color: #fff; cursor: pointer;
+        }
+        .dpad button:active, .remote-extra button:active { transform: scale(.92); background: rgba(255,255,255,.4); }
+        .remote-extra { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+        .remote-extra button { font-size: 14px; padding: 10px 16px; }
+        /* 历史/短语 */
+        .list-item {
+            display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.15);
+            border-radius: 9px; padding: 9px 10px; margin-bottom: 6px; font-size: 14px;
+        }
+        .list-item .txt { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+        .list-item .del { border: none; background: none; color: #fecaca; font-size: 15px; cursor: pointer; padding: 2px 6px; }
+        .empty { font-size: 12px; opacity: .65; text-align: center; padding: 6px 0; }
+        .phrase-add { display: flex; gap: 8px; margin-top: 8px; }
+        .phrase-add input {
+            flex: 1; border: none; border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; color: #222;
+        }
+        .hint { font-size: 11.5px; opacity: .7; text-align: center; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="dev-row">
+        <span class="dot" id="status-dot"></span>
+        <select id="device-select"></select>
+        <button class="mini-btn" id="btn-add-device">＋设备</button>
+        <button class="mini-btn" id="btn-del-device">删除</button>
+    </div>
+</div>
+
+<div class="card">
+    <h2>✏️ 输入（<label><input type="radio" name="mode" value="realtime" checked> 实时</label> /
+        <label><input type="radio" name="mode" value="manual"> 手动发送</label>）</h2>
+    <textarea id="input-box" placeholder="输入文字，或点【粘贴】读取手机剪贴板…"
+        autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+    <div class="count"><span id="char-count">0</span> 字</div>
+    <div class="url-tip" id="url-tip"></div>
+    <div class="row">
+        <button class="btn gray" id="btn-paste">📋 粘贴</button>
+        <button class="btn" id="btn-send">🚀 发送到电视</button>
+        <button class="btn gray" id="btn-copyback">⬅ 复制回手机</button>
+    </div>
+    <div class="row">
+        <button class="btn gray" id="btn-voice">🎤 语音输入</button>
+        <button class="btn gray" id="btn-file">📄 文件</button>
+        <button class="btn gray" id="btn-image">🖼 图片投屏</button>
+        <button class="btn red" id="btn-clear">清空电视</button>
+    </div>
+    <input type="file" id="file-input" style="display:none" accept="text/*,.txt,.json,.srt,.m3u,image/*">
+    <p class="hint" style="margin-top:8px">实时模式：打字即同步；手动模式：点【发送到电视】整体替换。语音需 Chrome/Safari 支持。</p>
+</div>
+
+<div class="card">
+    <h2>🎮 遥控器</h2>
+    <div class="dpad">
+        <span></span><button data-key="up">↑</button><span></span>
+        <button data-key="left">←</button><button data-key="ok">OK</button><button data-key="right">→</button>
+        <span></span><button data-key="down">↓</button><span></span>
+    </div>
+    <div class="remote-extra">
+        <button data-key="back">↩ 返回</button>
+        <button data-key="esc">✖ Esc</button>
+        <button data-key="tab">⇥ Tab</button>
+        <button data-key="info">ℹ Info</button>
+        <button id="btn-tv-del">⌫ 删除一字</button>
+        <button id="btn-enter">⏎ 确认</button>
+    </div>
+</div>
+
+<div class="card">
+    <h2>📜 剪贴板历史（最近10条）<button class="mini-btn" style="float:right" id="btn-clear-hist">清空</button></h2>
+    <div id="history-list"></div>
+</div>
+
+<div class="card">
+    <h2>⭐ 常用短语</h2>
+    <div id="phrase-list"></div>
+    <div class="phrase-add">
+        <input id="phrase-input" placeholder="添加短语/网址/账号…">
+        <button class="mini-btn" id="btn-add-phrase">添加</button>
+    </div>
+</div>
+
+<p class="hint">📱→📺 二维码输入法 v1.5 · 手机与盒子需同一局域网 · 支持多台盒子切换</p>
+
+<script>
+(function () {
+    'use strict';
+
+    /* ============ 多设备管理 ============ */
+    var LS_DEV = 'qrime_devices', LS_HIST = 'qrime_history', LS_PHRASE = 'qrime_phrases';
+    var devices = JSON.parse(localStorage.getItem(LS_DEV) || '[]');
+    var curOrigin = location.origin; // 默认：当前页面来源的盒子
+    if (!devices.some(function (d) { return d.url === curOrigin; })) {
+        devices.unshift({ name: '本机 (' + location.hostname + ')', url: curOrigin });
+        localStorage.setItem(LS_DEV, JSON.stringify(devices));
+    }
+
+    function saveDevices() { localStorage.setItem(LS_DEV, JSON.stringify(devices)); }
+    function currentUrl() {
+        var sel = document.getElementById('device-select');
+        return sel.value || curOrigin;
+    }
+    function renderDevices() {
+        var sel = document.getElementById('device-select');
+        sel.innerHTML = '';
+        devices.forEach(function (d) {
+            var opt = document.createElement('option');
+            opt.value = d.url; opt.textContent = d.name;
+            sel.appendChild(opt);
+        });
+        sel.value = devices.some(function (d) { return d.url === curOrigin; }) ? curOrigin : devices[0].url;
+    }
+    renderDevices();
+
+    document.getElementById('device-select').addEventListener('change', function () {
+        pollStatus();
+    });
+    document.getElementById('btn-add-device').addEventListener('click', function () {
+        var ip = prompt('输入另一台盒子的IP地址：', '');
+        if (!ip) return;
+        ip = ip.replace(/^https?:\/\//, '').replace(/:\d+.*$/, '').trim();
+        if (!ip) return;
+        var url = 'http://' + ip + ':8765';
+        if (devices.some(function (d) { return d.url === url; })) return alert('已存在');
+        devices.push({ name: '盒子 ' + ip, url: url });
+        saveDevices(); renderDevices();
+        document.getElementById('device-select').value = url;
+        pollStatus();
+    });
+    document.getElementById('btn-del-device').addEventListener('click', function () {
+        var url = currentUrl();
+        if (url === curOrigin) return alert('不能删除当前连接的盒子');
+        devices = devices.filter(function (d) { return d.url !== url; });
+        saveDevices(); renderDevices(); pollStatus();
+    });
+
+    /* ============ API 封装（发到当前选中设备） ============ */
+    function api(path, method, body) {
+        return fetch(currentUrl() + path, {
+            method: method || 'POST',
+            body: body,
+            headers: body !== undefined ? { 'Content-Type': 'text/plain; charset=utf-8' } : undefined
+        }).then(function (r) { setStatus(true); return r.json(); })
+          .catch(function (e) { setStatus(false); throw e; });
+    }
+    function apiJson(path, obj) {
+        return fetch(currentUrl() + path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(obj)
+        }).then(function (r) { setStatus(true); return r.json(); })
+          .catch(function () { setStatus(false); });
+    }
+
+    function setStatus(ok) {
+        var dot = document.getElementById('status-dot');
+        dot.classList.toggle('off', !ok);
+    }
+    function pollStatus() {
+        fetch(currentUrl() + '/api/status')
+            .then(function (r) { return r.json(); })
+            .then(function (d) { setStatus(d.connected !== false); })
+            .catch(function () { setStatus(false); });
+    }
+    setInterval(pollStatus, 3000);
+    pollStatus();
+
+    /* ============ 输入与发送模式 ============ */
+    var input = document.getElementById('input-box');
+    var lastText = '';
+    var mode = function () {
+        return document.querySelector('input[name=mode]:checked').value;
+    };
+
+    function updateCount() {
+        document.getElementById('char-count').textContent = input.value.length;
+    }
+    // URL 检测提示
+    input.addEventListener('input', function () {
+        updateCount();
+        var tip = document.getElementById('url-tip');
+        var m = input.value.match(/https?:\/\/[^\s]+|^[a-zA-Z0-9][\w.-]+\.[a-z]{2,}[^\s]*$/i);
+        if (m) {
+            tip.style.display = 'block';
+            tip.textContent = '🔗 检测到网址：' + m[0] + '（点【发送到电视】即可填入）';
+        } else {
+            tip.style.display = 'none';
+        }
+        if (mode() === 'realtime') diffSend();
+    });
+
+    function diffSend() {
+        var cur = input.value, added = '', deleted = 0;
+        if (cur.length > lastText.length && cur.startsWith(lastText)) {
+            added = cur.substring(lastText.length);
+        } else if (cur.length < lastText.length && lastText.startsWith(cur)) {
+            deleted = lastText.length - cur.length;
+        } else if (cur !== lastText) {
+            // 光标在中间修改：退化为全文同步
+            api('/api/sync', 'POST', cur);
+            lastText = cur;
+            return;
+        }
+        lastText = cur;
+        for (var i = 0; i < deleted; i++) api('/api/delete');
+        if (added) api('/api/input', 'POST', added);
+    }
+
+    // 发送到电视：手动按钮 / 实时模式下也作为“补一刀”的全文同步
+    document.getElementById('btn-send').addEventListener('click', sendToTV);
+    function sendToTV() {
+        var text = input.value;
+        if (!text) return;
+        api('/api/sync', 'POST', text).then(function () {
+            addHistory(text);
+        });
+    }
+
+    // 回车
+    document.getElementById('btn-enter').addEventListener('click', function () {
+        api('/api/enter');
+        if (input.value.trim()) addHistory(input.value);
+        input.value = ''; lastText = ''; updateCount(); input.focus();
+    });
+    // 删除一字
+    document.getElementById('btn-tv-del').addEventListener('click', function () {
+        api('/api/delete');
+    });
+    // 清空电视
+    document.getElementById('btn-clear').addEventListener('click', function () {
+        api('/api/clear');
+        input.value = ''; lastText = ''; updateCount(); input.focus();
+    });
+
+    /* ============ 剪贴板：粘贴 & 复制回 ============ */
+    document.getElementById('btn-paste').addEventListener('click', function () {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+            navigator.clipboard.readText().then(function (t) {
+                insertAtCursor(t);
+                toast('已粘贴 ' + t.length + ' 字');
+            }).catch(function () {
+                input.focus();
+                toast('剪贴板权限被拒，请长按输入框选择粘贴');
+            });
+        } else {
+            input.focus();
+            toast('此浏览器不支持读剪贴板，请长按输入框粘贴');
+        }
+    });
+
+    document.getElementById('btn-copyback').addEventListener('click', function () {
+        fetch(currentUrl() + '/api/selection').then(function (r) { return r.json(); })
+            .then(function (d) {
+                var t = d.text || '';
+                input.value = t; lastText = t; updateCount();
+                if (navigator.clipboard && navigator.clipboard.writeText && t) {
+                    navigator.clipboard.writeText(t).then(function () {
+                        toast('已复制到手机剪贴板：' + (t.length > 40 ? t.substring(0, 40) + '…' : t));
+                    }).catch(function () { toast('已读取到输入框（复制失败）'); });
+                } else {
+                    toast('已读取到输入框，可长按全选复制');
+                }
+            }).catch(function () { toast('读取失败'); });
+    });
+
+    function insertAtCursor(t) {
+        var s = input.selectionStart, e = input.selectionEnd;
+        input.value = input.value.substring(0, s) + t + input.value.substring(e);
+        var p = s + t.length;
+        input.setSelectionRange(p, p);
+        updateCount();
+        if (mode() === 'realtime') diffSend(); else lastText = input.value;
+    }
+
+    function toast(msg) {
+        var el = document.createElement('div');
+        el.style.cssText = 'position:fixed;left:50%;bottom:60px;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;z-index:99;max-width:86vw;';
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(function () { el.remove(); }, 2200);
+    }
+
+    /* ============ 语音输入 ============ */
+    var recog = null, recognizing = false;
+    var voiceBtn = document.getElementById('btn-voice');
+    voiceBtn.addEventListener('click', function () {
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { toast('此浏览器不支持语音识别，请用 Chrome 或 Safari'); return; }
+        if (recognizing) { recog.stop(); return; }
+        recog = new SR();
+        recog.lang = 'zh-CN';
+        recog.interimResults = false;
+        recog.onstart = function () { recognizing = true; voiceBtn.textContent = '🔴 说吧…'; };
+        recog.onend = function () { recognizing = false; voiceBtn.textContent = '🎤 语音输入'; };
+        recog.onerror = function (ev) {
+            recognizing = false; voiceBtn.textContent = '🎤 语音输入';
+            toast(ev.error === 'not-allowed' ? '麦克风权限被拒绝' : '识别失败: ' + ev.error);
+        };
+        recog.onresult = function (ev) {
+            var t = '';
+            for (var i = ev.resultIndex; i < ev.results.length; i++) t += ev.results[i][0].transcript;
+            insertAtCursor(t);
+            toast('识别：' + t);
+        };
+        try { recog.start(); } catch (e) { toast('启动失败，请重试'); }
+    });
+
+    /* ============ 文件 & 图片投屏 ============ */
+    var fileInput = document.getElementById('file-input');
+    document.getElementById('btn-file').addEventListener('click', function () {
+        fileInput.accept = 'text/*,.txt,.json,.srt,.m3u,.xml,.conf';
+        fileInput.click();
+    });
+    document.getElementById('btn-image').addEventListener('click', function () {
+        fileInput.accept = 'image/*';
+        fileInput.click();
+    });
+    fileInput.addEventListener('change', function () {
+        var f = fileInput.files[0];
+        if (!f) return;
+        if (/^image\//.test(f.type)) {
+            sendImage(f);
+        } else {
+            var reader = new FileReader();
+            reader.onload = function () {
+                var text = String(reader.result);
+                api('/api/sync', 'POST', text).then(function () {
+                    input.value = text; lastText = text; updateCount();
+                    addHistory('📄 ' + f.name + '（' + text.length + '字）');
+                    toast('文件内容已发送到电视');
+                });
+            };
+            reader.readAsText(f, 'utf-8');
+        }
+        fileInput.value = '';
+    });
+
+    function sendImage(file) {
+        var img = new Image();
+        img.onload = function () {
+            var canvas = document.createElement('canvas');
+            var maxW = 1920, scale = Math.min(1, maxW / img.width);
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            apiJson('/api/image', { data: dataUrl }).then(function (d) {
+                if (d && d.status === 'ok') toast('图片已投屏到电视 📺');
+                else toast('投屏失败');
+            });
+        };
+        img.onerror = function () { toast('图片读取失败'); };
+        img.src = URL.createObjectURL(file);
+    }
+
+    /* ============ 遥控器按键 ============ */
+    document.querySelectorAll('[data-key]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            api('/api/key', 'POST', btn.getAttribute('data-key'));
+        });
+    });
+
+    /* ============ 历史 ============ */
+    function getHist() { return JSON.parse(localStorage.getItem(LS_HIST) || '[]'); }
+    function addHistory(text) {
+        if (!text || !text.trim()) return;
+        var arr = getHist().filter(function (x) { return x !== text; });
+        arr.unshift(text);
+        while (arr.length > 10) arr.pop();
+        localStorage.setItem(LS_HIST, JSON.stringify(arr));
+        renderHistory();
+    }
+    function renderHistory() {
+        var box = document.getElementById('history-list');
+        var arr = getHist();
+        box.innerHTML = '';
+        if (!arr.length) { box.innerHTML = '<div class="empty">暂无记录</div>'; return; }
+        arr.forEach(function (item) {
+            var div = document.createElement('div');
+            div.className = 'list-item';
+            var txt = document.createElement('span');
+            txt.className = 'txt';
+            txt.textContent = item.length > 36 ? item.substring(0, 36) + '…' : item;
+            txt.title = item;
+            txt.addEventListener('click', function () {
+                api('/api/sync', 'POST', item);
+                input.value = item; lastText = item; updateCount();
+            });
+            var del = document.createElement('button');
+            del.className = 'del'; del.textContent = '✕';
+            del.addEventListener('click', function () {
+                localStorage.setItem(LS_HIST, JSON.stringify(getHist().filter(function (x) { return x !== item; })));
+                renderHistory();
+            });
+            div.appendChild(txt); div.appendChild(del);
+            box.appendChild(div);
+        });
+    }
+    document.getElementById('btn-clear-hist').addEventListener('click', function () {
+        localStorage.removeItem(LS_HIST); renderHistory();
+    });
+    renderHistory();
+
+    /* ============ 常用短语 ============ */
+    function getPhrases() { return JSON.parse(localStorage.getItem(LS_PHRASE) || '[]'); }
+    function renderPhrases() {
+        var box = document.getElementById('phrase-list');
+        var arr = getPhrases();
+        box.innerHTML = '';
+        if (!arr.length) { box.innerHTML = '<div class="empty">还没有短语，在下方添加常用网址、账号等</div>'; return; }
+        arr.forEach(function (item) {
+            var div = document.createElement('div');
+            div.className = 'list-item';
+            var txt = document.createElement('span');
+            txt.className = 'txt';
+            txt.textContent = item.length > 36 ? item.substring(0, 36) + '…' : item;
+            txt.title = item;
+            txt.addEventListener('click', function () {
+                // 直接提交到电视光标处
+                api('/api/input', 'POST', item);
+            });
+            var del = document.createElement('button');
+            del.className = 'del'; del.textContent = '✕';
+            del.addEventListener('click', function () {
+                localStorage.setItem(LS_PHRASE, JSON.stringify(getPhrases().filter(function (x) { return x !== item; })));
+                renderPhrases();
+            });
+            div.appendChild(txt); div.appendChild(del);
+            box.appendChild(div);
+        });
+    }
+    document.getElementById('btn-add-phrase').addEventListener('click', function () {
+        var inp = document.getElementById('phrase-input');
+        var t = inp.value.trim();
+        if (!t) return;
+        var arr = getPhrases();
+        if (arr.indexOf(t) === -1) { arr.unshift(t); localStorage.setItem(LS_PHRASE, JSON.stringify(arr)); }
+        inp.value = '';
+        renderPhrases();
+    });
+    renderPhrases();
+
+    updateCount();
+})();
+</script>
+</body>
+</html>
