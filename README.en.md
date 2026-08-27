@@ -7,6 +7,12 @@ Scan the QR code / open the console to send text, files, and images to the TV in
 
 **Read this in [中文](README.md).**
 
+## 📸 Preview
+
+![Main console](docs/screenshot.png)
+
+![Live typing sync demo](docs/typing.gif)
+
 ## ✨ Features
 
 | Category | Feature |

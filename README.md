@@ -7,6 +7,12 @@ Android 输入法应用：**手机 ↔ 电视盒子 局域网联动输入**。
 
 > 包名：`com.qrinput.ime` ｜ 版本：v1.5 ｜ 大小：约 3.7 MB
 
+## 📸 预览
+
+![主界面](docs/screenshot.png)
+
+![实时打字同步演示](docs/typing.gif)
+
 ## ✨ 功能
 
 | 分类 | 功能 |
