@@ -28,15 +28,16 @@ Scan the QR code / open the console to send text, files, and images to the TV in
 
 ## 📲 Installation
 
-1. Download `二维码输入法-v1.5.apk` from [Releases](../../releases) and install it on your Android phone;
+1. Install `二维码输入法-v1.5.apk` on an **Android TV box / TV** (any Android-based box);
 2. Settings → Language & Input → enable **QR Input IME**;
-3. Phone and box must be on the **same LAN**;
-4. Run the companion server on your box (HTTP port `8765`) and show the QR code / console URL on the TV;
-5. Scan the QR code with your phone → pick the device → start typing.
+3. A pairing QR code (console URL) appears on the TV;
+4. **No app needed on your phone** — scan the QR code and the console opens in your browser.
 
-## 🔌 Box-side API (port 8765)
+> The server is built into the APK (NanoHTTPD, port 8765). Works out of the box, no extra deployment.
 
-The console talks to the box over these REST endpoints (phone and box must be on the same subnet):
+## 🔌 Built-in server API (port 8765)
+
+The APK embeds an HTTP server that serves both the console page and the REST endpoints below (phone and box must be on the same subnet):
 
 | Method | Path | Description |
 |---|---|---|
@@ -50,10 +51,10 @@ The console talks to the box over these REST endpoints (phone and box must be on
 | GET | `/api/selection` | Read the selected text on the TV |
 | POST | `/api/image` | Cast an image `{data: "data:image/jpeg;base64,..."}` |
 
-## 🛠 Self-host the console
+## 🛠 Self-host the console (optional)
 
-`assets/input.html` is the console page bundled inside the APK (pure HTML+JS, zero dependencies).
-You can host it directly on the box, or fork and repackage it.
+`assets/input.html` is the console page bundled inside the APK (pure HTML+JS, zero dependencies). By default it is served directly by the APK's built-in server.
+To customize, host the file on any static server and add the box IP in the console's "Add device" (default port 8765).
 
 ## 📁 Repo layout
 
