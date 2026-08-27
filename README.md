@@ -47,6 +47,10 @@ Android 输入法应用：**手机 ↔ 电视盒子 局域网联动输入**。
 `assets/input.html` 为 APK 内置控制台页面源码（纯 HTML+JS，无任何依赖）。
 盒子端可直接自托管该文件，或 fork 魔改后重新打包。
 
+## 📄 License
+
+[MIT](LICENSE) © minshurui — 可自由使用、修改、分发（含商用），需保留版权声明。
+
 ## 📁 仓库结构
 
 ```
