@@ -171,6 +171,7 @@
 
     document.getElementById('device-select').addEventListener('change', function () {
         pollStatus();
+        reloadServerData();
     });
     document.getElementById('btn-add-device').addEventListener('click', function () {
         var ip = prompt('输入另一台盒子的IP地址：', '');
@@ -417,6 +418,30 @@
         });
     });
 
+    /* ============ 盒子端同步（短语/历史 存盒子，localStorage 为缓存） ============ */
+    function loadListFromServer(path, localKey, render) {
+        fetch(currentUrl() + path)
+            .then(function (r) { if (!r.ok) throw new Error('no-api'); return r.json(); })
+            .then(function (d) {
+                if (Array.isArray(d.list)) {
+                    localStorage.setItem(localKey, JSON.stringify(d.list));
+                    render();
+                }
+            })
+            .catch(function () { /* 旧版服务端无此接口时保持本地数据 */ });
+    }
+    function saveListToServer(path, arr) {
+        fetch(currentUrl() + path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+            body: JSON.stringify(arr)
+        }).catch(function () { /* 网络失败时静默，本地已保存 */ });
+    }
+    function reloadServerData() {
+        loadListFromServer('/api/history', LS_HIST, renderHistory);
+        loadListFromServer('/api/phrases', LS_PHRASE, renderPhrases);
+    }
+
     /* ============ 历史 ============ */
     function getHist() { return JSON.parse(localStorage.getItem(LS_HIST) || '[]'); }
     function addHistory(text) {
@@ -425,6 +450,7 @@
         arr.unshift(text);
         while (arr.length > 10) arr.pop();
         localStorage.setItem(LS_HIST, JSON.stringify(arr));
+        saveListToServer('/api/history', arr);
         renderHistory();
     }
     function renderHistory() {
@@ -446,7 +472,9 @@
             var del = document.createElement('button');
             del.className = 'del'; del.textContent = '✕';
             del.addEventListener('click', function () {
-                localStorage.setItem(LS_HIST, JSON.stringify(getHist().filter(function (x) { return x !== item; })));
+                var arr = getHist().filter(function (x) { return x !== item; });
+                localStorage.setItem(LS_HIST, JSON.stringify(arr));
+                saveListToServer('/api/history', arr);
                 renderHistory();
             });
             div.appendChild(txt); div.appendChild(del);
@@ -454,9 +482,12 @@
         });
     }
     document.getElementById('btn-clear-hist').addEventListener('click', function () {
-        localStorage.removeItem(LS_HIST); renderHistory();
+        localStorage.removeItem(LS_HIST);
+        saveListToServer('/api/history', []);
+        renderHistory();
     });
     renderHistory();
+    loadListFromServer('/api/history', LS_HIST, renderHistory);
 
     /* ============ 常用短语 ============ */
     function getPhrases() { return JSON.parse(localStorage.getItem(LS_PHRASE) || '[]'); }
@@ -479,7 +510,9 @@
             var del = document.createElement('button');
             del.className = 'del'; del.textContent = '✕';
             del.addEventListener('click', function () {
-                localStorage.setItem(LS_PHRASE, JSON.stringify(getPhrases().filter(function (x) { return x !== item; })));
+                var arr = getPhrases().filter(function (x) { return x !== item; });
+                localStorage.setItem(LS_PHRASE, JSON.stringify(arr));
+                saveListToServer('/api/phrases', arr);
                 renderPhrases();
             });
             div.appendChild(txt); div.appendChild(del);
@@ -491,11 +524,12 @@
         var t = inp.value.trim();
         if (!t) return;
         var arr = getPhrases();
-        if (arr.indexOf(t) === -1) { arr.unshift(t); localStorage.setItem(LS_PHRASE, JSON.stringify(arr)); }
+        if (arr.indexOf(t) === -1) { arr.unshift(t); localStorage.setItem(LS_PHRASE, JSON.stringify(arr)); saveListToServer('/api/phrases', arr); }
         inp.value = '';
         renderPhrases();
     });
     renderPhrases();
+    loadListFromServer('/api/phrases', LS_PHRASE, renderPhrases);
 
     updateCount();
 })();
