@@ -33,7 +33,7 @@ Scan the QR code / open the console to send text, files, and images to the TV in
 3. A pairing QR code (console URL) appears on the TV;
 4. **No app needed on your phone** — scan the QR code and the console opens in your browser.
 
-> The server is built into the APK (NanoHTTPD, port 8765). Works out of the box, no extra deployment.
+> The server is built into the APK (NanoHTTPD, port 8765).
 
 ## 🔌 Built-in server API (port 8765)
 
@@ -51,21 +51,20 @@ The APK embeds an HTTP server that serves both the console page and the REST end
 | GET | `/api/selection` | Read the selected text on the TV |
 | POST | `/api/image` | Cast an image `{data: "data:image/jpeg;base64,..."}` |
 
-## 🛠 Self-host the console (optional)
-
-`assets/input.html` is the console page bundled inside the APK (pure HTML+JS, zero dependencies). By default it is served directly by the APK's built-in server.
-To customize, host the file on any static server and add the box IP in the console's "Add device" (default port 8765).
-
 ## 📁 Repo layout
 
 ```
 .
 ├── 二维码输入法-v1.5.apk   # Installer
 ├── assets/
-│   └── input.html          # Bundled console source (self-hostable)
-└── README.md / README.en.md
+│   └── input.html          # Bundled console source
+├── docs/
+│   ├── screenshot.png
+│   └── typing.gif
+├── README.md
+└── README.en.md
 ```
 
 ## 📄 License
 
-[MIT](LICENSE) © minshurui — free to use, modify, distribute (incl. commercial), provided the copyright notice is retained.
+[MIT](LICENSE) © minshurui

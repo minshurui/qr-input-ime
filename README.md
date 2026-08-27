@@ -33,7 +33,7 @@ Android 输入法应用：**手机 ↔ 电视盒子 局域网联动输入**。
 3. 电视上显示配对二维码（控制台地址）；
 4. **手机无需安装任何 App**，扫码后用浏览器打开控制台即可打字、遥控。
 
-> 服务端由 APK 内置（NanoHTTPD，端口 8765），开箱即用，无需额外部署。
+> 服务端由 APK 内置（NanoHTTPD，端口 8765）。
 
 ## 🔌 内置服务端 API（端口 8765）
 
@@ -51,14 +51,9 @@ APK 内置 HTTP 服务端，控制台页面与以下 REST 接口均由它提供�
 | GET | `/api/selection` | 读取电视端选中文本 |
 | POST | `/api/image` | 图片投屏 `{data: "data:image/jpeg;base64,..."}` |
 
-## 🛠 自托管控制台（可选）
-
-`assets/input.html` 为 APK 内置控制台页面源码（纯 HTML+JS，无任何依赖），默认由 APK 自带的服务端直接提供。
-若想自定义，可在任意静态服务器托管该文件，浏览器打开后在「添加设备」里填入盒子 IP 即可（默认端口 8765）。
-
 ## 📄 License
 
-[MIT](LICENSE) © minshurui — 可自由使用、修改、分发（含商用），需保留版权声明。
+[MIT](LICENSE) © minshurui
 
 ## 📁 仓库结构
 
@@ -66,6 +61,10 @@ APK 内置 HTTP 服务端，控制台页面与以下 REST 接口均由它提供�
 .
 ├── 二维码输入法-v1.5.apk   # 安装包
 ├── assets/
-│   └── input.html          # 内置控制台源码（可自托管）
-└── README.md
+│   └── input.html          # 内置控制台源码
+├── docs/
+│   ├── screenshot.png
+│   └── typing.gif
+├── README.md
+└── README.en.md
 ```
